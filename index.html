@@ -71,7 +71,19 @@
       if (!backCamera) return;
 
 
-      codeReader.decodeFromVideoDevice(backCamera, previewElem, (result, err) => {
+      const constraints = {
+      video: {
+        facingMode: { exact: "environment" },
+        zoom: { ideal: 2.0 }  // Можна спробувати й більше: 3, 4 тощо
+      }
+    };
+    
+    navigator.mediaDevices.getUserMedia(constraints)
+      .then((stream) => {
+        previewElem.srcObject = stream;
+        previewElem.play();
+    
+        codeReader.decodeFromStream(stream, previewElem, (result, err) => {
           if (result) {
             const code = result.getText();
             if (!scanned.has(code)) {
@@ -79,7 +91,7 @@
               const li = document.createElement('li');
               li.textContent = code;
               output.appendChild(li);
-
+    
               const frame = document.getElementById("scanner-frame");
               frame.classList.add("flash");
               setTimeout(() => frame.classList.remove("flash"), 200);
@@ -91,6 +103,7 @@
         });
       })
       .catch(console.error);
+
 
     document.getElementById("download_btn_zxing").onclick = function () {
       const csv = Array.from(scanned).join("\n");
