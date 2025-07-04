@@ -64,46 +64,47 @@
     const output = document.getElementById('output_zxing');
     const scanned = new Set();
 
-    codeReader
-      .listVideoInputDevices()
-      .then((videoInputDevices) => {
-      const backCamera = videoInputDevices.find(device => device.label.toLowerCase().includes('back'))?.deviceId || videoInputDevices[0]?.deviceId;
+    codeReader.listVideoInputDevices().then((videoInputDevices) => {
+      const backCamera = videoInputDevices.find(device =>
+        device.label.toLowerCase().includes('back')
+      )?.deviceId || videoInputDevices[0]?.deviceId;
+
       if (!backCamera) return;
 
-
       const constraints = {
-      video: {
-        facingMode: { exact: "environment" },
-        zoom: { ideal: 2.0 }  // Можна спробувати й більше: 3, 4 тощо
-      }
-    };
-    
-    navigator.mediaDevices.getUserMedia(constraints)
-      .then((stream) => {
-        previewElem.srcObject = stream;
-        previewElem.play();
-    
-        codeReader.decodeFromStream(stream, previewElem, (result, err) => {
-          if (result) {
-            const code = result.getText();
-            if (!scanned.has(code)) {
-              scanned.add(code);
-              const li = document.createElement('li');
-              li.textContent = code;
-              output.appendChild(li);
-    
-              const frame = document.getElementById("scanner-frame");
-              frame.classList.add("flash");
-              setTimeout(() => frame.classList.remove("flash"), 200);
-            }
-          }
-          if (err && !(err instanceof ZXing.NotFoundException)) {
-            console.error(err);
-          }
-        });
-      })
-      .catch(console.error);
+        video: {
+          deviceId: backCamera,
+          facingMode: { exact: "environment" },
+          zoom: { ideal: 2.0 }
+        }
+      };
 
+      navigator.mediaDevices.getUserMedia(constraints)
+        .then((stream) => {
+          previewElem.srcObject = stream;
+          previewElem.play();
+
+          codeReader.decodeFromStream(stream, previewElem, (result, err) => {
+            if (result) {
+              const code = result.getText();
+              if (!scanned.has(code)) {
+                scanned.add(code);
+                const li = document.createElement('li');
+                li.textContent = code;
+                output.appendChild(li);
+
+                const frame = document.getElementById("scanner-frame");
+                frame.classList.add("flash");
+                setTimeout(() => frame.classList.remove("flash"), 200);
+              }
+            }
+            if (err && !(err instanceof ZXing.NotFoundException)) {
+              console.error(err);
+            }
+          });
+        })
+        .catch(console.error);
+    });
 
     document.getElementById("download_btn_zxing").onclick = function () {
       const csv = Array.from(scanned).join("\n");
