@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Scan Serials (ZXing)</title>
+  <style>
+    body {
+      padding: 20px;
+      font-family: sans-serif;
+      text-align: center;
+    }
+
+    #scanner-wrapper {
+      position: relative;
+      display: inline-block;
+    }
+
+    #preview_zxing {
+      width: 400px;
+      height: 300px;
+      border: 3px solid black;
+    }
+
+    #scanner-frame {
+      position: absolute;
+      top: 35%;
+      left: 10%;
+      width: 80%;
+      height: 25%;
+      border: 2px dashed red;
+      box-sizing: border-box;
+      pointer-events: none;
+      transition: border-color 0.3s;
+    }
+
+    #scanner-frame.flash {
+      border-color: limegreen;
+    }
+
+    #output_zxing {
+      margin-top: 20px;
+      max-height: 200px;
+      overflow-y: auto;
+      text-align: left;
+      display: inline-block;
+    }
+  </style>
+</head>
+<body>
+  <h1>Scan Serials (ZXing)</h1>
+  <div id="scanner-wrapper">
+    <video id="preview_zxing" autoplay muted playsinline></video>
+    <div id="scanner-frame"></div>
+  </div>
+  <ul id="output_zxing"></ul>
+  <br />
+  <button id="download_btn_zxing" style="margin-top: 20px; padding: 10px;">Download CSV</button>
+
+  <script src="https://unpkg.com/@zxing/library@latest"></script>
+  <script>
+    const codeReader = new ZXing.BrowserMultiFormatReader();
+    const previewElem = document.getElementById('preview_zxing');
+    const output = document.getElementById('output_zxing');
+    const scanned = new Set();
+
+    codeReader
+      .listVideoInputDevices()
+      .then((videoInputDevices) => {
+        const firstDevice = videoInputDevices[0]?.deviceId;
+        if (!firstDevice) return;
+
+        codeReader.decodeFromVideoDevice(firstDevice, previewElem, (result, err) => {
+          if (result) {
+            const code = result.getText();
+            if (!scanned.has(code)) {
+              scanned.add(code);
+              const li = document.createElement('li');
+              li.textContent = code;
+              output.appendChild(li);
+
+              const frame = document.getElementById("scanner-frame");
+              frame.classList.add("flash");
+              setTimeout(() => frame.classList.remove("flash"), 200);
+            }
+          }
+          if (err && !(err instanceof ZXing.NotFoundException)) {
+            console.error(err);
+          }
+        });
+      })
+      .catch(console.error);
+
+    document.getElementById("download_btn_zxing").onclick = function () {
+      const csv = Array.from(scanned).join("\n");
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const link = document.createElement('a');
+      link.href = window.URL.createObjectURL(blob);
+      link.download = 'serials.csv';
+      link.click();
+    };
+  </script>
+</body>
+</html>
