@@ -67,10 +67,11 @@
     codeReader
       .listVideoInputDevices()
       .then((videoInputDevices) => {
-        const firstDevice = videoInputDevices[0]?.deviceId;
-        if (!firstDevice) return;
+      const backCamera = videoInputDevices.find(device => device.label.toLowerCase().includes('back'))?.deviceId || videoInputDevices[0]?.deviceId;
+      if (!backCamera) return;
 
-        codeReader.decodeFromVideoDevice(firstDevice, previewElem, (result, err) => {
+
+      codeReader.decodeFromVideoDevice(backCamera, previewElem, (result, err) => {
           if (result) {
             const code = result.getText();
             if (!scanned.has(code)) {
